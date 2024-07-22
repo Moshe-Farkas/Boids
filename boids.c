@@ -90,9 +90,49 @@ double directionAngle(SDL_FPoint vector) {
     return angle;
 }
 
-void updateEdges() {
+void update(float dt) {
     for (int i = 0; i < boidsCount; i++) {
         boid_t* current = &boids[i];
+        float xVelAgv = 0; float yVelAgv = 0;
+        float xPosAvg = 0; float yPosAvg = 0;
+        float closeDx = 0; float closeDy = 0;
+        int visibleCount = 0;
+
+        for (int j = 0; j < boidsCount; j++) {
+            boid_t other = boids[j];
+            float distance = boidDistance(*current, other);
+            if (distance < PROTECTED_RANGE) {
+                closeDx += current->pos.x - other.pos.x;
+                closeDy += current->pos.y - other.pos.y;
+            }
+
+            if (distance < VISIBLE_RANGE) {
+                visibleCount++;
+                // avg vel
+                xVelAgv += other.vel.x;
+                yVelAgv += other.vel.y;
+                // avg pos
+                xPosAvg += other.pos.x;
+                yPosAvg += other.pos.y;
+            }
+        }
+        if (visibleCount > 0) {
+            xVelAgv /= visibleCount;
+            yVelAgv /= visibleCount;
+            xPosAvg /= visibleCount;
+            yPosAvg /= visibleCount;
+
+            // alignment
+            current->vel.x += (xVelAgv - current->vel.x) * MATCHING_FACTOR;
+            current->vel.y += (yVelAgv - current->vel.y) * MATCHING_FACTOR;
+            // cohesion
+            current->vel.x += (xPosAvg - current->pos.x) * CENTERING_FACTOR;
+            current->vel.y += (yPosAvg - current->pos.y) * CENTERING_FACTOR;
+        }
+        // seperation
+        current->vel.x += (closeDx * AVOID_FACTOR);
+        current->vel.y += (closeDy * AVOID_FACTOR);
+        // update direction based on screen margins
         // left margin
         if (current->pos.x < SCREEN_MARGIN) {
             current->vel.x += TURN_FACTOR;
@@ -109,93 +149,13 @@ void updateEdges() {
         if (current->pos.y < SCREEN_MARGIN) {
             current->vel.y += TURN_FACTOR;
         }
-    }
-}
-
-void seperation() {
-    for (int i = 0; i < boidsCount; i++) {
-        boid_t* current = &boids[i];
-        float closeDx = 0;
-        float closeDy = 0;
-        for (int j = 0; j < boidsCount; j++) {
-            float distance = boidDistance(*current, boids[j]);
-            if (distance <= PROTECTED_RANGE) {
-                closeDx += current->pos.x - boids[j].pos.x;
-                closeDy += current->pos.y - boids[j].pos.y;
-            }
-        }
-        current->vel.x += closeDx * AVOID_FACTOR;
-        current->vel.y += closeDy * AVOID_FACTOR;
-    }
-}
-
-void alignment() { 
-    for (int i = 0; i < boidsCount; i++) {
-        boid_t* current = &boids[i];
-        float xVelAvg = 0;
-        float yVelAvg = 0;
-        int neighboringCount = 0;
-        for (int j = 0; j < boidsCount; j++) {
-            float distance = boidDistance(*current, boids[j]);
-            if (distance <= VISIBLE_RANGE) {
-                xVelAvg += boids[j].vel.x;
-                yVelAvg += boids[j].vel.y;
-                neighboringCount++;
-            }
-        }
-        if (neighboringCount > 0) {
-            xVelAvg /= neighboringCount;
-            yVelAvg /= neighboringCount;
-        }
-        current->vel.x += (xVelAvg - current->vel.x) * MATCHING_FACTOR;
-        current->vel.y += (yVelAvg - current->vel.y) * MATCHING_FACTOR;
-    }
-}
-
-void cohesion() {
-    // for each boid get the avg distance of other boids in it's visible range and tries to move towards them
-    for (int i = 0; i < boidsCount; i++) {
-        boid_t* current = &boids[i];
-        float avgX = 0;
-        float avgY = 0;
-        int visibleBoidCount = 0;
-        for (int j = 0; j < boidsCount; j++) {
-            float distance = boidDistance(*current, boids[j]);
-            if (distance <= VISIBLE_RANGE) {
-                visibleBoidCount++;
-                avgX += boids[j].pos.x;
-                avgY += boids[j].pos.y;
-            }
-        }
-        if (boidsCount > 0) {
-            avgX = avgX / visibleBoidCount;
-            avgY = avgY / visibleBoidCount;
-        }
-        // now update the current boid's vel accordingly
-        current->vel.x += (avgX - current->pos.x) * CENTERING_FACTOR;
-        current->vel.y += (avgY - current->pos.y) * CENTERING_FACTOR;
-    }
-}
-
-void update(float dt) {
-    seperation();
-    alignment();
-    cohesion();
-    updateEdges();
-    for (int i = 0; i < boidsCount; i++) {
-        // update pos
-        boid_t* current = &boids[i];
-        current->pos.x += current->vel.x * dt;
-        current->pos.y += current->vel.y * dt;
         // update angle
         current->vel.y = -current->vel.y; // to move from sdl coordinates to euclidean coordinates
         current->angle = directionAngle(current->vel);
         current->vel.y = -current->vel.y;
-
-        // if (current->pos.x + current->width >= SCREEN_WIDTH || current->pos.x < 0)
-        //     current->vel.x = -current->vel.x;
-        // if (current->pos.y + current->height >= SCREEN_HEIGHT || current->pos.y < 0)
-        //     current->vel.y = -current->vel.y;
+        // update pos
+        current->pos.x += current->vel.x * dt;
+        current->pos.y += current->vel.y * dt;
     }
 }
 
