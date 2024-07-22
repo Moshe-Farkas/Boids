@@ -1,1 +1,1 @@
-![boids showcase] (https://github.com/Moshe-Farkas/Boids/blob/main/res/boids-showcase.gif)
+![boids showcase](https://github.com/Moshe-Farkas/Boids/blob/main/res/boids-showcase.gif)
