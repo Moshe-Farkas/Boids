@@ -229,17 +229,6 @@ int main() {
         // draw margins
         SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
 
-        SDL_Rect edges = {
-            SCREEN_MARGIN,
-            SCREEN_MARGIN,
-            SCREEN_WIDTH - SCREEN_MARGIN * 2,
-            SCREEN_HEIGHT - SCREEN_MARGIN * 2
-        };
-        SDL_RenderDrawRect(
-            renderer,
-            &edges
-        );
-
         SDL_RenderPresent(renderer);
     }
 
