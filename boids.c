@@ -34,23 +34,6 @@ float boidDistance(boid_t a, boid_t b) {
     return sqrt(pow(b.pos.x - a.pos.x, 2) + pow(b.pos.y - a.pos.y, 2));
 }
 
-double rightAngleCalc(int x1, int y1, int x2, int y2) {
-    // returns 
-    // distance from mouse pos and triangle pos is the hypotinuse
-    float hyp = sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-
-    // int cx = x2;
-    int cy = y1;
-
-    // float adjacent = sqrt(pow(x1 - cx, 2));
-
-    float opposite = sqrt(pow(y2 - cy, 2));
-
-    return asin(opposite / hyp) * 57.2958;
-    double radians = asin(opposite / hyp);
-    return radians * (180.0 / M_PI);
-}
-
 void drawBoids(SDL_Renderer* renderer, SDL_Texture* boidTexture) {
     for (int i = 0; i < boidsCount; i++) {
         boid_t* current = &boids[i];
